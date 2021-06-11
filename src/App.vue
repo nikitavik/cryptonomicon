@@ -1,5 +1,15 @@
 <template>
   <div class="container mx-auto flex flex-col items-center bg-gray-100 p-4">
+<!--    Spinner-->
+    <div
+        v-if="!loaded"
+        class="fixed w-100 h-100 opacity-80 bg-purple-800 inset-0 z-50 flex items-center justify-center">
+      <svg class="animate-spin -ml-1 mr-3 h-12 w-12 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+        <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+      </svg>
+    </div>
+<!--    Main-->
     <div class="container">
       <section>
         <div class="flex">
@@ -11,6 +21,8 @@
               <input
                   v-model="ticker"
                   @keydown.enter="add"
+                  @input="valid = true; predictCoin();"
+                  @click="valid = true"
                   type="text"
                   name="wallet"
                   id="wallet"
@@ -18,21 +30,22 @@
                   placeholder="Например DOGE"
               />
             </div>
-            <div class="flex bg-white shadow-md p-1 rounded-md shadow-md flex-wrap">
-            <span class="inline-flex items-center px-2 m-1 rounded-md text-xs font-medium bg-gray-300 text-gray-800 cursor-pointer">
-              BTC
-            </span>
-              <span class="inline-flex items-center px-2 m-1 rounded-md text-xs font-medium bg-gray-300 text-gray-800 cursor-pointer">
-              DOGE
-            </span>
-              <span class="inline-flex items-center px-2 m-1 rounded-md text-xs font-medium bg-gray-300 text-gray-800 cursor-pointer">
-              BCH
-            </span>
-              <span class="inline-flex items-center px-2 m-1 rounded-md text-xs font-medium bg-gray-300 text-gray-800 cursor-pointer">
-              CHD
+            <div v-if="prediction.length > 0 && ticker.trim().length > 0"
+                class="flex bg-white shadow-md p-1 rounded-md shadow-md flex-wrap">
+            <span
+                @click="predictionClickHandler(predictedCoin.Symbol)"
+                v-for="predictedCoin in prediction"
+                :key="predictedCoin.id"
+                class="inline-flex items-center px-2 m-1 rounded-md text-xs font-medium bg-gray-300 text-gray-800 cursor-pointer">
+              {{ predictedCoin.Symbol }}
             </span>
             </div>
-            <div class="text-sm text-red-600">Такой тикер уже добавлен</div>
+
+            <div
+                v-if="!valid"
+                class="text-sm text-red-600">
+              Такой тикер уже добавлен
+            </div>
           </div>
         </div>
         <button
@@ -118,8 +131,6 @@
         >
           <svg
               xmlns="http://www.w3.org/2000/svg"
-              xmlns:xlink="http://www.w3.org/1999/xlink"
-              xmlns:svgjs="http://svgjs.com/svgjs"
               version="1.1"
               width="30"
               height="30"
@@ -151,27 +162,37 @@ export default {
       ticker: "",
       tickers: [],
       sel: null,
-      graph: []
+      graph: [],
+      coins: {},
+      valid: true,
+      prediction: [],
+      loaded: false,
     }
   },
   methods: {
     add() {
       const currentTicker = {
-        name: this.ticker,
+        name: this.ticker.trim().toUpperCase(),
         price: "-"
       }
-      this.tickers.push(currentTicker)
+      if (!this.tickers.find(item => item.name === currentTicker.name) && currentTicker.name.length > 0) {
+        this.tickers.push(currentTicker)
+        this.fetchPrice(currentTicker)
+        this.ticker = ""
+        console.log(currentTicker.name)
+      }
+      else {this.valid = false}
+    },
+    fetchPrice(_ticker) {
       setInterval(async ()=> {
-        const f = await fetch(`https://min-api.cryptocompare.com/data/price?fsym=${currentTicker.name}&tsyms=USD&api_key=3a9939c71614aa7ead54d731e2a9a43b498ffaa7897eaa5cb884257b3297e3b9`)
+        const f = await fetch(`https://min-api.cryptocompare.com/data/price?fsym=${_ticker.name}&tsyms=USD&api_key=3a9939c71614aa7ead54d731e2a9a43b498ffaa7897eaa5cb884257b3297e3b9`)
         const data = await f.json()
-        currentTicker.price = data.USD
+        _ticker.price = data.USD
 
-        if (this.sel?.name === currentTicker.name) {
+        if (this.sel?.name === _ticker.name) {
           this.graph.push(data.USD)
         }
       }, 4000)
-      this.ticker = ""
-
     },
     select(ticker) {
       this.sel = ticker
@@ -180,14 +201,43 @@ export default {
     handleDelete(tickerToRemove) {
       this.tickers = this.tickers.filter(t => t !== tickerToRemove)
     },
-
     normalizeGraph(){
       const maxVal = Math.max(...this.graph)
       const minVal = Math.min(...this.graph)
       return this.graph.map(price =>
         5 + ((price - minVal) * 95) / (maxVal - minVal)
       )
+    },
+    async fetchCoinList() {
+      const res = await fetch("https://min-api.cryptocompare.com/data/all/coinlist?summary=true")
+      const data = await res.json()
+      this.coins = data.Data
+      this.loaded = true
+    },
+    predictCoin(){
+      const target = this.ticker
+      const predict = []
+      for (let coin in this.coins) {
+        if (
+            this.coins[coin]?.FullName.toLowerCase().includes(target.toLowerCase())
+            ||
+            this[coin]?.Symbol.toUpperCase().includes(target.toUpperCase()))
+        {
+          predict.push(this.coins[coin])
+        }
+      }
+      this.prediction = predict.reverse().slice(0, 5)
+    },
+    predictionClickHandler(coin) {
+      console.log(coin)
+      this.ticker = coin
+      this.add()
     }
+
+  },
+
+  created: function () {
+    this.fetchCoinList()
   }
 }
 </script>
