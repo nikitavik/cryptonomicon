@@ -104,7 +104,7 @@
                 {{ t.name }} - USD
               </dt>
               <dd class="mt-1 text-3xl font-semibold text-gray-900">
-                {{ t.price }}
+                {{ formatPrice(t.price) }}
               </dd>
             </div>
             <div class="w-full border-t border-gray-200"></div>
@@ -188,6 +188,8 @@
 // [x] График сломан если везде одинаковые значения
 // [x] При удалении тикера остается выбор
 
+import { subscribeToTicker, unsubscribeFromTicker } from "@/api";
+
 export default {
   name: 'App',
   data() {
@@ -206,10 +208,10 @@ export default {
       loaded: false,
 
       page: 1,
-      // hasNextPage: true, // Расчитываемая переменная
     }
   },
   computed: {
+    // Pagination Logic
     endIndex() {
       return 6 * this.page
     },
@@ -227,6 +229,7 @@ export default {
     hasNextPage() {
       return this.filteredTickers.length > this.endIndex
     },
+    // Graph normalization
     normalizedGraph(){
       const maxVal = Math.max(...this.graph)
       const minVal = Math.min(...this.graph)
@@ -245,6 +248,17 @@ export default {
     }
   },
   methods: {
+    updateTicker(tickerName, price) {
+      this.tickers.filter(t => t.name === tickerName).forEach(t => {t.price = price})
+    },
+    // Price formatting
+    formatPrice(price) {
+      if (price === "-") { return }
+      return price > 1
+          ? price.toFixed(2)
+          : price.toPrecision(2)
+    },
+    // Add coin function
     add() {
       const currentTicker = {
         name: this.ticker.trim().toUpperCase(),
@@ -252,37 +266,42 @@ export default {
       }
       if (!this.tickers.find(item => item.name === currentTicker.name) && currentTicker.name.length > 0) {
         this.tickers = [...this.tickers, currentTicker]
-        this.fetchPrice(currentTicker)
-        this.ticker = ""
+        this.filter = ""
+        subscribeToTicker(currentTicker.name, (newPrice)=> {
+          this.updateTicker(currentTicker.name, newPrice)
+      })
       }
       else {this.valid = false}
+      this.ticker = ""
     },
-    fetchPrice(_ticker) {
-      setInterval(async ()=> {
-        const f = await fetch(`https://min-api.cryptocompare.com/data/price?fsym=${_ticker.name}&tsyms=USD&api_key=3a9939c71614aa7ead54d731e2a9a43b498ffaa7897eaa5cb884257b3297e3b9`)
-        const data = await f.json()
-        _ticker.price = data.USD
-
-        if (this.selectedTicker?.name === _ticker.name) {
-          this.graph.push(data.USD)
-        }
-      }, 40000)
+    async updateTickers() {
+      // if (!this.tickers.length) { return }
+      //
+      // this.tickers.forEach(ticker => {
+      //   const price = exchangeData[ticker.name.toUpperCase()]
+      //   ticker.price = price ?? "-"
+      // })
     },
+    // Select Handler
     select(ticker) {
       this.selectedTicker = ticker
     },
+    // Delete Handler
     handleDelete(tickerToRemove) {
       this.tickers = this.tickers.filter(t => t !== tickerToRemove)
       if (this.selectedTicker === tickerToRemove) {
         this.selectedTicker = null
+        unsubscribeFromTicker(tickerToRemove.name)
       }
     },
+    // !!!!!!!!!!!!!!! Move to api !!!!!!!!!!!!!
     async fetchCoinList() {
       const res = await fetch("https://min-api.cryptocompare.com/data/all/coinlist?summary=true")
       const data = await res.json()
       this.coins = data.Data
       this.loaded = true
     },
+    // Prediction System
     predictCoin(){
       const target = this.ticker
       const predict = []
@@ -297,14 +316,15 @@ export default {
       }
       this.prediction = predict.reverse().slice(0, 5)
     },
+    // Prediction click
     predictionClickHandler(coin) {
-      console.log(coin)
       this.ticker = coin
       this.add()
     },
   },
 
   created: function () {
+    // URL Filter and Page save
     const windowData = Object.fromEntries(new URL(window.location).searchParams.entries())
     if (windowData.filter) {
       this.filter = windowData.filter
@@ -312,23 +332,36 @@ export default {
     if (windowData.page) {
       this.page = windowData.page
     }
-
+    // Receive data about existing coins
     this.fetchCoinList()
-    if (localStorage.getItem("cryptonomicon")){
-      this.tickers = JSON.parse(localStorage.getItem("cryptonomicon"))
-      this.tickers.forEach(t => this.fetchPrice(t))
+
+    // Coins' prices update
+    const tickersData = localStorage.getItem("cryptonomicon")
+    if (tickersData){
+      this.tickers = JSON.parse(tickersData);
+      this.tickers.forEach(ticker => {
+        subscribeToTicker(ticker.name, (newPrice)=> {
+          this.updateTicker(ticker.name, newPrice)
+        })
+      });
     }
+
+    setInterval(this.updateTickers, 5000)
   },
   watch: {
+    // Write tickers to local storage
     tickers(){
       localStorage.setItem("cryptonomicon", JSON.stringify(this.tickers))
     },
+    // Graph reset
     selectedTicker(){
       this.graph = []
     },
+    // Filter resets page
     filter(){
       this.page = 1
     },
+    // Write filter and page data to URL
     pageStateOptions(value) {
       history.pushState(
           null,
@@ -336,6 +369,7 @@ export default {
           `${window.location.pathname}?filter=${value.filter}&page=${value.page}`
       )
     },
+    // Empty page => pagination jumps back
     paginatedTickers(){
       if (this.paginatedTickers.length === 0 && this.page > 1) {
         this.page -= 1
