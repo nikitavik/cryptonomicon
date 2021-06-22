@@ -1,14 +1,14 @@
 const API_KEY =
     "3a9939c71614aa7ead54d731e2a9a43b498ffaa7897eaa5cb884257b3297e3b9";
+const AGGREGATE_INDEX = "5"
 
 const tickersHandlers = new Map()
 const socket =  new WebSocket(
   `wss://streamer.cryptocompare.com/v2?api_key=${API_KEY}`
     )
-
-const AGGREGATE_INDEX = "5"
 socket.addEventListener("message", e => {
     const {TYPE: type, FROMSYMBOL: currency, PRICE: newPrice} = JSON.parse(e.data)
+
     if (type !== AGGREGATE_INDEX || !newPrice){
         return;
     }
@@ -17,7 +17,6 @@ socket.addEventListener("message", e => {
       (fn) => fn(newPrice)
     )
 })
-
 function sendToWebSocket(message) {
     const stringifiedMsg =JSON.stringify(message)
     if (socket.readyState === WebSocket.OPEN) {
@@ -26,8 +25,6 @@ function sendToWebSocket(message) {
     }
     socket.addEventListener("open", ()=> socket.send(stringifiedMsg), {once:true})
 }
-
-
 function subscribeToTickerOnWs(ticker) {
     sendToWebSocket(
       {
@@ -44,7 +41,6 @@ function unsubscribeToTickerOnWs(ticker) {
       }
     )
 }
-
 export const subscribeToTicker = (ticker, cb) => {
     const subscribers = tickersHandlers.get(ticker) || []
     tickersHandlers.set(ticker, [...subscribers, cb])
@@ -55,6 +51,17 @@ export const unsubscribeFromTicker = (ticker) => {
     unsubscribeToTickerOnWs(ticker)
 }
 // TODO EXPAND WEBSOCKET INTERFACE
+
+
+
+
+
+
+
+
+
+
+
 
 
 

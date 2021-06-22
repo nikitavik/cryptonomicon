@@ -174,11 +174,11 @@
 
 <script>
 // [x] 6. Наличие в состоянии зависимых данных || 5+
-// [ ] 2. При удалении остается подписка на загрузку тикера || 5
-// [ ] 4. Запросы напрямую внутри компонента || 5
+// [x] 2. При удалении остается подписка на загрузку тикера || 5
+// [x] 4. Запросы напрямую внутри компонента || 5
 // [ ] 5. Обработка ошибок API || 5
-// [x] 8. При удалении тикера не изменятеся LocStor || 4
-// [ ] 3. Количество запросов || 4
+// [x] 8. При удалении тикера не изменятеся LocStorage || 4
+// [x] 3. Количество запросов || 4
 // [x] 1. Одинаковый код в watch || 3
 // [ ] 9. localStorage и анонимные вкладки (локал сторадж может быть недоступен) || 3
 // [ ] 7. Если много цен график ужасный || 2
@@ -282,14 +282,6 @@ export default {
       else {this.valid = false}
       this.ticker = ""
     },
-    async updateTickers() {
-      // if (!this.tickers.length) { return }
-      //
-      // this.tickers.forEach(ticker => {
-      //   const price = exchangeData[ticker.name.toUpperCase()]
-      //   ticker.price = price ?? "-"
-      // })
-    },
     // Select Handler
     select(ticker) {
       this.selectedTicker = ticker
@@ -353,8 +345,6 @@ export default {
         })
       });
     }
-
-    setInterval(this.updateTickers, 5000)
   },
   watch: {
     // Write tickers to local storage
