@@ -95,7 +95,8 @@
               :key="t.name"
               @click="select(t)"
               :class="{
-                'border-4' : selectedTicker ===t
+                'border-4' : selectedTicker === t,
+                'bg-red-100': !formatPrice(t.price),
               }"
               class="bg-white overflow-hidden shadow rounded-lg border-purple-800 border-solid cursor-pointer"
           >
