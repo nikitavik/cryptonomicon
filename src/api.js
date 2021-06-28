@@ -11,26 +11,30 @@ const socket =  new WebSocket(
   `wss://streamer.cryptocompare.com/v2?api_key=${API_KEY}`
     )
 
-// function listenToBTC() {
-//     subscribeToTickerOnWs(BTC, USD)
-// }
-// listenToBTC()
+function listenToBTC() {
+    subscribeToTickerOnWs(BTC, USD)
+}
+listenToBTC()
 
 let BTCPrice
 
 socket.addEventListener("message", e => {
     const {TYPE: type, FROMSYMBOL: currency, PRICE: newPrice, TOSYMBOL: exchange} = JSON.parse(e.data)
-    if (type === AGGREGATE_INDEX && exchange === USD && currency === BTC) {
-        BTCPrice = newPrice
-    }
     if (type === ERROR_MESSAGE) {
         const brokenTicker = JSON.parse(e.data).PARAMETER.slice(9, -4)
-        subscribeToTickerOnWs(brokenTicker, BTC)
+        if (brokenTicker !== BTC) {
+            subscribeToTickerOnWs(brokenTicker, BTC)
+        }
     }
     if (type !== AGGREGATE_INDEX || !newPrice){
         return;
     }
-    writePrice(currency, exchange === BTC ? (1 / ((1 / BTCPrice) / newPrice)) : newPrice)
+    if (type === AGGREGATE_INDEX) {
+        if (exchange === USD && currency === BTC) {
+            BTCPrice = newPrice
+        }
+        writePrice(currency, exchange === BTC ? (1 / ((1 / BTCPrice) / newPrice)) : newPrice)
+    }
 })
 
 function writePrice(currency, newPrice) {
