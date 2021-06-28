@@ -135,7 +135,8 @@
         <h3 class="text-lg leading-6 font-medium text-gray-900 my-8">
           {{ selectedTicker.name }} - USD
         </h3>
-        <div class="flex items-end border-gray-600 border-b border-l h-64">
+        <div class="flex items-end border-gray-600 border-b border-l h-64"
+             ref="graph">
           <div
               v-for="(bar, idx) in normalizedGraph"
               :key="idx"
@@ -174,16 +175,19 @@
 </template>
 
 <script>
+// H - HomeWord
+// X - Done
+
 // [x] 6. Наличие в состоянии зависимых данных || 5+
 // [x] 2. При удалении остается подписка на загрузку тикера || 5
 // [x] 4. Запросы напрямую внутри компонента || 5
-// [ ] 5. Обработка ошибок API || 5
+// [H] 5. Обработка ошибок API || 5
 // [x] 8. При удалении тикера не изменятеся LocStorage || 4
 // [x] 3. Количество запросов || 4
 // [x] 1. Одинаковый код в watch || 3
 // [ ] 9. localStorage и анонимные вкладки (локал сторадж может быть недоступен) || 3
-// [ ] 7. Если много цен график ужасный || 2
-// [ ] 10. Магические строки и числа (URL, 5000 задержки, ключь локалсторджа, кол-во на странице) || 1
+// [x] 7. Если много цен график ужасный || 2
+// [H] 10. Магические строки и числа (URL, 5000 задержки, ключь локалсторджа, кол-во на странице) || 1
 
 // Паралельно
 // [x] График сломан если везде одинаковые значения
@@ -208,6 +212,7 @@ export default {
       prediction: [],
       loaded: false,
 
+      maxGraphElements: 1,
       page: 1,
     }
   },
@@ -249,12 +254,20 @@ export default {
     }
   },
   methods: {
+    calculateMaxGraphElements() {
+      if(this.$refs.graph) {
+        this.maxGraphElements = this.$refs.graph.clientWidth / 38
+      }
+    },
     updateTicker(tickerName, price) {
       this.tickers.
       filter(t => t.name === tickerName)
           .forEach(t => {
             if (t === this.selectedTicker){
               this.graph.push(price)
+              if (this.graph.length > this.maxGraphElements) {
+                this.graph.shift()
+              }
             }
             t.price = price
           })
@@ -286,6 +299,7 @@ export default {
     // Select Handler
     select(ticker) {
       this.selectedTicker = ticker
+      this.$nextTick().then(this.calculateMaxGraphElements)
     },
     // Delete Handler
     handleDelete(tickerToRemove) {
@@ -346,6 +360,12 @@ export default {
         })
       });
     }
+  },
+  mounted() {
+    window.addEventListener("resize", this.calculateMaxGraphElements)
+  },
+  beforeUnmount() {
+    window.removeEventListener("resize", this.calculateMaxGraphElements)
   },
   watch: {
     // Write tickers to local storage
