@@ -1,5 +1,6 @@
 const API_KEY =
     "3a9939c71614aa7ead54d731e2a9a43b498ffaa7897eaa5cb884257b3297e3b9";
+const COINS_LIST = "https://min-api.cryptocompare.com/data/all/coinlist?summary=true"
 const AGGREGATE_INDEX = "5"
 const ERROR_MESSAGE = "500"
 const USD = "USD"
@@ -76,6 +77,14 @@ export const subscribeToTicker = (ticker, cb) => {
 export const unsubscribeFromTicker = (ticker) => {
     tickersHandlers.delete(ticker)
     unsubscribeToTickerOnWs(ticker, USD)
+}
+
+
+
+export const fetchCoinList = async function fetchCoinList() {
+    const res = await fetch(COINS_LIST)
+    const data = await res.json()
+    return data.Data
 }
 
 
