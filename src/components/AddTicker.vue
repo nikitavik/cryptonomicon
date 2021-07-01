@@ -36,7 +36,7 @@
         </div>
       </div>
     </div>
-    <add-button @click="add"
+    <add-ticker-button @click="add"
                 type="button"
                 class="my-4"
                 :disabled="disabled"
@@ -45,13 +45,13 @@
 </template>
 
 <script>
-import AddButton from "./AddButton"
 import {fetchCoinList} from "@/api";
+import AddTickerButton from "@/components/AddTickerButton";
 
 export default {
  name: "AddTicker",
   components: {
-   AddButton
+   AddTickerButton
   },
   data(){
    return {
