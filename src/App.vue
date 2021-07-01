@@ -14,6 +14,7 @@
       <add-ticker
           @add-ticker="add"
           @load-page="onLoadPage()"
+          :disabled="tooManyTickers"
       />
       <hr class="w-full border-t border-gray-600 my-4"/>
       <button
@@ -147,6 +148,7 @@ export default {
   components: {
     AddTicker,
   },
+
   data() {
     return {
       ticker: "",
@@ -163,6 +165,10 @@ export default {
     }
   },
   computed: {
+    // Tickers
+    tooManyTickers() {
+      return this.tickers.length >= 12
+    },
     // Pagination Logic
     endIndex() {
       return 6 * this.page

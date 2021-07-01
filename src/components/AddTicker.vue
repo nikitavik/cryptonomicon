@@ -39,6 +39,7 @@
     <add-button @click="add"
                 type="button"
                 class="my-4"
+                :disabled="this.disabled  "
     />
   </section>
 </template>
@@ -61,10 +62,33 @@ export default {
       loaded: false,
    }
   },
+  props: {
+    disabled: {
+      type: Boolean,
+      required: false,
+      default: false,
+    }
+  },
+  emits: {
+   "add-ticker": value => {
+     if (typeof value === "string" && value.length > 0){
+       return true
+     }
+     else {
+       console.warn("Invalid emit on add-ticker")
+     }
+   },
+  "load-page": value => typeof value === "boolean" ? true : console.warn("Invalid emit on load-page")
+  },
   created() {
+   // Call function to load coins list
    this.fetchCoinList()
   },
+  computed: {
+
+  },
   methods: {
+    // Emit ticker name
     add() {
       this.$emit("add-ticker", this.ticker)
       this.ticker = ""
@@ -86,11 +110,13 @@ export default {
     },
     // Prediction click
     predictionClickHandler(coin) {
-      this.ticker = coin
-      this.add()
+      if (!this.disabled) {
+        this.ticker = coin
+        this.add()
+      }
     },
 
-    // Prediction Data
+    // Load prediction data and tell when it's loaded
     async fetchCoinList() {
       fetchCoinList()
           .then((data)=> {
