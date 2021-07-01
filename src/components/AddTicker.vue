@@ -39,7 +39,7 @@
     <add-button @click="add"
                 type="button"
                 class="my-4"
-                :disabled="this.disabled  "
+                :disabled="disabled"
     />
   </section>
 </template>
