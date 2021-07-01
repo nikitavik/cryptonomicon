@@ -79,6 +79,7 @@
       </template>
       <!--Ticker Graph Field-->
       <ticker-graph
+          :price = "selectedTickerPrice"
           :selectedTicker = "selectedTicker"
           @close-graph = "selectedTicker = null"
       />
@@ -115,14 +116,11 @@ export default {
     return {
       ticker: "",
       filter: "",
-
       tickers: [],
       selectedTicker: null,
-
       loaded: false,
-
-
       page: 1,
+      selectedTickerPrice: null
     }
   },
   computed: {
@@ -164,10 +162,7 @@ export default {
       filter(t => t.name === tickerName)
           .forEach(t => {
             if (t === this.selectedTicker){
-              this.graph.push(price)
-              if (this.graph.length > this.maxGraphElements) {
-                this.graph.shift()
-              }
+              this.selectedTickerPrice = price
             }
             t.price = price
           })

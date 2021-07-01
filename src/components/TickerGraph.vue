@@ -31,6 +31,10 @@ export default {
       type: Object,
       required: false,
       default: null,
+    },
+    price: {
+      type: Number,
+      required: false,
     }
   },
   emits: {
@@ -62,12 +66,6 @@ export default {
         this.maxGraphElements = this.$refs.graph.clientWidth / 38
       }
     },
-    updateGraph(price) {
-      this.graph.push(price)
-      if (this.graph.length > this.maxGraphElements) {
-        this.graph.shift()
-      }
-    }
   },
   watch: {
     // Graph reset and Max graph elements recalc
@@ -75,10 +73,13 @@ export default {
       this.graph = []
       this.$nextTick().then(this.calculateMaxGraphElements)
       },
-
+    price() {
+      this.graph.push(this.price)
+        if (this.graph.length > this.maxGraphElements) {
+          this.graph.shift()
+        }
+    }
   },
-
-
   mounted() {
     window.addEventListener("resize", this.calculateMaxGraphElements)
   },
