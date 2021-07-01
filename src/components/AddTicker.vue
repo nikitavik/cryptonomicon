@@ -32,7 +32,7 @@
         <div
             v-if="!valid"
             class="text-sm text-red-600">
-            Такой тикер уже добавлен
+            {{ errMessage }}
         </div>
       </div>
     </div>
@@ -58,6 +58,7 @@ export default {
       ticker: "",
       prediction: [],
       valid: true,
+      errMessage: "",
       coins: {},
       loaded: false,
    }
@@ -67,11 +68,15 @@ export default {
       type: Boolean,
       required: false,
       default: false,
+    },
+    tickers: {
+      type: Array,
+      required: true,
     }
   },
   emits: {
    "add-ticker": value => {
-     if (typeof value === "string" && value.length > 0){
+     if (typeof value === "object" && value.name.length > 0){
        return true
      }
      else {
@@ -90,8 +95,24 @@ export default {
   methods: {
     // Emit ticker name
     add() {
-      this.$emit("add-ticker", this.ticker)
-      this.ticker = ""
+      const currentTicker = {
+        name: this.ticker.trim().toUpperCase(),
+        price: "-"
+      }
+      // Validate and emit ticker
+      if  (currentTicker.name.trim().length > 0) {
+        if (!this.tickers.find(item => item.name === currentTicker.name)) {
+          this.$emit("add-ticker", currentTicker)
+          this.ticker = ""
+        } else {
+          this.valid = false
+          this.errMessage = "Такой тикер уже добавлен"
+        }
+      }
+      else {
+        this.valid = false
+        this.errMessage = "Нельзя добавить пустой тикер"
+      }
     },
     // Prediction System
     predictCoin(){

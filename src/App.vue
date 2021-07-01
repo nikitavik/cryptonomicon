@@ -11,6 +11,7 @@
           @add-ticker="add"
           @load-page="onLoadPage()"
           :disabled="tooManyTickers"
+          :tickers = "tickers"
       />
       <hr class="w-full border-t border-gray-600 my-4"/>
       <!--Filter and Pagination-->
@@ -92,7 +93,7 @@
 // Главное
 // TODO [ ] Перенести валидацию в AddTicker || 5
 // TODO [ ] localStorage и анонимные вкладки (локал сторадж может быть недоступен) || 3
-// TODO [ ] Магические строки и числа (URL, 5000 задержки, ключь локалсторджа, кол-во на странице) || 1
+// TODO [ ] Магические строки и числа  || 1
 // Паралельно
 
 // Дополнительно
@@ -174,19 +175,12 @@ export default {
           : price.toPrecision(2)
     },
     // Add coin function
-    add(ticker) {
-      const currentTicker = {
-        name: ticker.trim().toUpperCase(),
-        price: "-"
-      }
-      if (!this.tickers.find(item => item.name === currentTicker.name) && currentTicker.name.length > 0) {
+    add(currentTicker) {
         this.tickers = [...this.tickers, currentTicker]
         this.filter = ""
         subscribeToTicker(currentTicker.name, (newPrice)=> {
           this.updateTicker(currentTicker.name, newPrice)
-      })
-      }
-      else {this.valid = false}
+        })
     },
     // Select Handler
     select(ticker) {
