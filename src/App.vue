@@ -77,75 +77,35 @@
         </dl>
         <hr class="w-full border-t border-gray-600 my-4" />
       </template>
-      <section v-if="selectedTicker"
-          class="relative">
-        <h3 class="text-lg leading-6 font-medium text-gray-900 my-8">
-          {{ selectedTicker.name }} - USD
-        </h3>
-        <div class="flex items-end border-gray-600 border-b border-l h-64"
-             ref="graph">
-          <div
-              v-for="(bar, idx) in normalizedGraph"
-              :key="idx"
-              :style="{height: `${bar}%`}"
-              class="bg-purple-800 border w-10"
-          ></div>
-        </div>
-        <button
-            @click="selectedTicker = null"
-            type="button"
-            class="absolute top-0 right-0"
-        >
-        <svg
-              xmlns="http://www.w3.org/2000/svg"
-              version="1.1"
-              width="30"
-              height="30"
-              x="0"
-              y="0"
-              viewBox="0 0 511.76 511.76"
-              style="enable-background:new 0 0 512 512"
-              xml:space="preserve"
-          >
-        <g>
-          <path
-              d="M436.896,74.869c-99.84-99.819-262.208-99.819-362.048,0c-99.797,99.819-99.797,262.229,0,362.048    c49.92,49.899,115.477,74.837,181.035,74.837s131.093-24.939,181.013-74.837C536.715,337.099,536.715,174.688,436.896,74.869z     M361.461,331.317c8.341,8.341,8.341,21.824,0,30.165c-4.16,4.16-9.621,6.251-15.083,6.251c-5.461,0-10.923-2.091-15.083-6.251    l-75.413-75.435l-75.392,75.413c-4.181,4.16-9.643,6.251-15.083,6.251c-5.461,0-10.923-2.091-15.083-6.251    c-8.341-8.341-8.341-21.845,0-30.165l75.392-75.413l-75.413-75.413c-8.341-8.341-8.341-21.845,0-30.165    c8.32-8.341,21.824-8.341,30.165,0l75.413,75.413l75.413-75.413c8.341-8.341,21.824-8.341,30.165,0    c8.341,8.32,8.341,21.824,0,30.165l-75.413,75.413L361.461,331.317z"
-              fill="#718096"
-              data-original="#000000">
-          </path>
-        </g>
-        </svg>
-        </button>
-      </section>
+      <ticker-graph
+          :selectedTicker = "selectedTicker"
+          @close-graph = "selectedTicker = null"
+      />
     </div>
   </div>
 </template>
 
 <script>
-// H - HomeWord
-// X - Done
 
-// [x] 6. Наличие в состоянии зависимых данных || 5+
-// [x] 2. При удалении остается подписка на загрузку тикера || 5
-// [x] 4. Запросы напрямую внутри компонента || 5
-// [H] 5. Обработка ошибок API || 5
-// [x] 8. При удалении тикера не изменятеся LocStorage || 4
-// [x] 3. Количество запросов || 4
-// [x] 1. Одинаковый код в watch || 3
-// [ ] 9. localStorage и анонимные вкладки (локал сторадж может быть недоступен) || 3
-// [x] 7. Если много цен график ужасный || 2
-// [H] 10. Магические строки и числа (URL, 5000 задержки, ключь локалсторджа, кол-во на странице) || 1
+// Главное
+// [ ] Передачи данных в график || 5+
+// [ ] localStorage и анонимные вкладки (локал сторадж может быть недоступен) || 3
+// [ ] Магические строки и числа (URL, 5000 задержки, ключь локалсторджа, кол-во на странице) || 1
 
 // Паралельно
-// [x] График сломан если везде одинаковые значения
-// [x] При удалении тикера остается выбор
+
+// Дополнительно
+// [ ] Починить api и улучшить обработку ошибок
+// [ ] Добавить SharedWorker для доступа к вебсокету на нескольких вкладках
 
 import { subscribeToTicker, unsubscribeFromTicker } from "@/api";
 import AddTicker from "@/components/AddTicker";
+import TickerGraph from "@/components/TickerGraph";
 
 export default {
   name: 'App',
   components: {
+    TickerGraph,
     AddTicker,
   },
 
@@ -157,10 +117,9 @@ export default {
       tickers: [],
       selectedTicker: null,
 
-      graph: [],
       loaded: false,
 
-      maxGraphElements: 1,
+
       page: 1,
     }
   },
@@ -187,17 +146,7 @@ export default {
     hasNextPage() {
       return this.filteredTickers.length > this.endIndex
     },
-    // Graph normalization
-    normalizedGraph(){
-      const maxVal = Math.max(...this.graph)
-      const minVal = Math.min(...this.graph)
-      if (maxVal === minVal) {
-        return this.graph.map(()=> 50)
-      }
-      return this.graph.map(price =>
-          5 + ((price - minVal) * 95) / (maxVal - minVal)
-      )
-    },
+
     pageStateOptions() {
       return {
         filter: this.filter,
@@ -208,11 +157,6 @@ export default {
   methods: {
     onLoadPage() {
       this.loaded = true
-    },
-    calculateMaxGraphElements() {
-      if(this.$refs.graph) {
-        this.maxGraphElements = this.$refs.graph.clientWidth / 38
-      }
     },
     updateTicker(tickerName, price) {
       this.tickers.
@@ -240,7 +184,6 @@ export default {
         name: ticker.trim().toUpperCase(),
         price: "-"
       }
-      console.log(currentTicker)
       if (!this.tickers.find(item => item.name === currentTicker.name) && currentTicker.name.length > 0) {
         this.tickers = [...this.tickers, currentTicker]
         this.filter = ""
@@ -253,7 +196,6 @@ export default {
     // Select Handler
     select(ticker) {
       this.selectedTicker = ticker
-      this.$nextTick().then(this.calculateMaxGraphElements)
     },
     // Delete Handler
     handleDelete(tickerToRemove) {
@@ -264,7 +206,6 @@ export default {
       }
     },
   },
-
   created: function () {
     // URL Filter and Page save
     const windowData = Object.fromEntries(new URL(window.location).searchParams.entries())
@@ -285,20 +226,10 @@ export default {
       });
     }
   },
-  mounted() {
-    window.addEventListener("resize", this.calculateMaxGraphElements)
-  },
-  beforeUnmount() {
-    window.removeEventListener("resize", this.calculateMaxGraphElements)
-  },
   watch: {
     // Write tickers to local storage
     tickers(){
       localStorage.setItem("cryptonomicon", JSON.stringify(this.tickers))
-    },
-    // Graph reset
-    selectedTicker(){
-      this.graph = []
     },
     // Filter resets page
     filter(){
@@ -318,7 +249,6 @@ export default {
         this.page -= 1
       }
     },
-
   }
 }
 </script>
