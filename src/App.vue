@@ -1,32 +1,39 @@
 <template>
   <div class="container mx-auto flex flex-col items-center bg-gray-100 p-4">
+    <!--Spinner-->
     <loading-spinner
         :loaded="loaded"
     />
+    <!--Main-->
     <div class="container">
+      <!--Add ticker field-->
       <add-ticker
           @add-ticker="add"
           @load-page="onLoadPage()"
           :disabled="tooManyTickers"
       />
       <hr class="w-full border-t border-gray-600 my-4"/>
-      <button
-          v-if="page !== 1"
-          @click="page = page - 1"
-          class="my-4 inline-flex items-center mx-4 py-2 px-4 border border-transparent shadow-sm text-sm leading-4 font-medium rounded-full text-white bg-gray-600 hover:bg-gray-700 transition-colors duration-300 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500">
-        Назад</button>
-      <button
-          v-if="hasNextPage"
-          @click="page = page + 1"
-          class="my-4 inline-flex items-center mx-4 py-2 px-4 border border-transparent shadow-sm text-sm leading-4 font-medium rounded-full text-white bg-gray-600 hover:bg-gray-700 transition-colors duration-300 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500">
-        Вперед</button>
-      <br>
-      <label>
-        Фильтр
-        <input
-            v-model="filter"
-        />
-      </label>
+      <!--Filter and Pagination-->
+      <div>
+        <button
+            v-if="page !== 1"
+            @click="page = page - 1"
+            class="my-4 inline-flex items-center mx-4 py-2 px-4 border border-transparent shadow-sm text-sm leading-4 font-medium rounded-full text-white bg-gray-600 hover:bg-gray-700 transition-colors duration-300 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500">
+          Назад</button>
+        <button
+            v-if="hasNextPage"
+            @click="page = page + 1"
+            class="my-4 inline-flex items-center mx-4 py-2 px-4 border border-transparent shadow-sm text-sm leading-4 font-medium rounded-full text-white bg-gray-600 hover:bg-gray-700 transition-colors duration-300 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500">
+          Вперед</button>
+        <br>
+        <label>
+          Фильтр
+          <input
+              v-model="filter"
+          />
+        </label>
+      </div>
+      <!--Tickers Field-->
       <template v-if="paginatedTickers">
         <hr class="w-full border-t border-gray-600 my-4" />
         <dl class="mt-5 grid grid-cols-1 gap-5 sm:grid-cols-3">
@@ -70,6 +77,7 @@
         </dl>
         <hr class="w-full border-t border-gray-600 my-4" />
       </template>
+      <!--Ticker Graph Field-->
       <ticker-graph
           :selectedTicker = "selectedTicker"
           @close-graph = "selectedTicker = null"
@@ -103,7 +111,6 @@ export default {
     TickerGraph,
     AddTicker,
   },
-
   data() {
     return {
       ticker: "",
@@ -141,7 +148,6 @@ export default {
     hasNextPage() {
       return this.filteredTickers.length > this.endIndex
     },
-
     pageStateOptions() {
       return {
         filter: this.filter,
