@@ -1,4 +1,5 @@
-# untitled
+# This app is in development
+# Cryptonomicon (With Javascript Ninja Vue.js course)
 
 ## Project setup
 ```
