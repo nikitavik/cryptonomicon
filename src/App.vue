@@ -13,9 +13,9 @@
           :disabled="tooManyTickers"
           :tickers = "tickers"
       />
-      <hr class="w-full border-t border-gray-600 my-4"/>
       <!--Filter and Pagination-->
-      <div>
+      <template v-if="showBlock">
+      <hr class="w-full border-t border-gray-600 my-4"/>
         <button
             v-if="page !== 1"
             @click="page = page - 1"
@@ -33,9 +33,9 @@
               v-model="filter"
           />
         </label>
-      </div>
+      </template>
       <!--Tickers Field-->
-      <template v-if="paginatedTickers">
+      <template v-if="paginatedTickers && showBlock">
         <hr class="w-full border-t border-gray-600 my-4" />
         <dl class="mt-5 grid grid-cols-1 gap-5 sm:grid-cols-3">
           <div
@@ -151,6 +151,9 @@ export default {
         filter: this.filter,
         page: this.page
       }
+    },
+    showBlock() {
+      return this.tickers.length > 0
     }
   },
   methods: {
