@@ -1,5 +1,5 @@
 # This app is in development
-# Cryptonomicon (With Javascript Ninja Vue.js course)
+# Cryptonomicon  Hosted version https://nikitavik.github.io/cryptonomicon-deploy/
 
 ## Project setup
 ```
